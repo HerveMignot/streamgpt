@@ -4,9 +4,9 @@ import openai
 import streamlit as st
 
 from streamlit_chat import message
-from dotenv import load_dotenv
+#from dotenv import load_dotenv
 
-load_dotenv('api_key.env')
+#load_dotenv('api_key.env')
 openai.api_key = os.environ.get('API_KEY')
 
 
