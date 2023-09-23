@@ -4,9 +4,8 @@ import openai
 import streamlit as st
 
 from streamlit_chat import message
-#from dotenv import load_dotenv
 
-#load_dotenv('api_key.env')
+
 openai.api_key = os.environ.get('AZURE_OPENAI_KEY')
 openai.api_base = os.environ.get('AZURE_OPENAI_ENDPOINT')
 openai.api_type = 'azure'
@@ -41,23 +40,53 @@ def get_completion(prompt, model=deployment_name):
     return response.choices[0].message["content"]
 
 
-st.title("Azure GPT Web App")
+def check_password():
+    """Returns `True` if the user had the correct password."""
 
-st.experimental_get_query_params()
-#{"show_map": ["True"], "selected": ["asia", "america"]}
+    def password_entered():
+        """Checks whether a password entered by the user is correct."""
+        if st.session_state["password"] == os.environ.get("USER_PASSWORD"):
+            st.session_state["password_correct"] = True
+            del st.session_state["password"]  # don't store password
+        else:
+            st.session_state["password_correct"] = False
 
-#storing the chat
-if 'generated' not in st.session_state:
-    st.session_state['generated'] = []
-if 'past' not in st.session_state:
-    st.session_state['past'] = []
-user_input=st.text_input("You:", key='input')
-if user_input:
-    output=get_completion(user_input)
-    #store the output
-    st.session_state['past'].append(user_input)
-    st.session_state['generated'].append(output)
-if st.session_state['generated']:
-    for i in range(len(st.session_state['generated'])-1, -1, -1):
-        message(st.session_state["generated"][i], key=str(i))
-        message(st.session_state['past'][i], is_user=True, key=str(i) + '_user')
+    if "password_correct" not in st.session_state:
+        # First run, show input for password.
+        st.text_input(
+            "Password", type="password", on_change=password_entered, key="password"
+        )
+        return False
+    elif not st.session_state["password_correct"]:
+        # Password not correct, show input + error.
+        st.text_input(
+            "Password", type="password", on_change=password_entered, key="password"
+        )
+        st.error("😕 Password incorrect")
+        return False
+    else:
+        # Password correct.
+        return True
+
+
+if check_password():
+    st.title("Azure GPT Web App")
+
+    st.experimental_get_query_params()
+    #{"show_map": ["True"], "selected": ["asia", "america"]}
+
+    #storing the chat
+    if 'generated' not in st.session_state:
+        st.session_state['generated'] = []
+    if 'past' not in st.session_state:
+        st.session_state['past'] = []
+    user_input=st.text_input("You:", key='input')
+    if user_input:
+        output=get_completion(user_input)
+        #store the output
+        st.session_state['past'].append(user_input)
+        st.session_state['generated'].append(output)
+    if st.session_state['generated']:
+        for i in range(len(st.session_state['generated'])-1, -1, -1):
+            message(st.session_state["generated"][i], key=str(i))
+            message(st.session_state['past'][i], is_user=True, key=str(i) + '_user')
