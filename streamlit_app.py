@@ -7,7 +7,14 @@ from streamlit_chat import message
 #from dotenv import load_dotenv
 
 #load_dotenv('api_key.env')
-openai.api_key = os.environ.get('API_KEY')
+openai.api_key = os.environ.get('AZURE_OPENAI_KEY')
+openai.api_base = os.environ.get('AZURE_OPENAI_ENDPOINT')
+openai.api_type = 'azure'
+openai.api_version = '2023-05-15' # this may change in the future
+deployment_name = os.environ.get('DEPLOYMENT_NAME')
+
+# openai.api_key = os.environ.get('API_KEY')
+# openai.api_key = os.environ.get('API_KEY')
 
 
 def generate_response(prompt):
@@ -23,15 +30,30 @@ def generate_response(prompt):
     return message
 
 
-st.title("ChatGPT-like Web App")
+def get_completion(prompt, model=deployment_name):
+    messages = [{"role": "system", "content": "Assistant is a large language model trained by OpenAI.",
+                 "role": "user", "content": prompt}]
+    response = openai.ChatCompletion.create(
+        engine=model,
+        messages=messages,
+        temperature=0, # this is the degree of randomness of the model's output
+    )
+    return response.choices[0].message["content"]
+
+
+st.title("Azure GPT Web App")
+
+st.experimental_get_query_params()
+#{"show_map": ["True"], "selected": ["asia", "america"]}
+
 #storing the chat
 if 'generated' not in st.session_state:
     st.session_state['generated'] = []
 if 'past' not in st.session_state:
     st.session_state['past'] = []
-user_input=st.text_input("You:",key='input')
+user_input=st.text_input("You:", key='input')
 if user_input:
-    output=generate_response(user_input)
+    output=get_completion(user_input)
     #store the output
     st.session_state['past'].append(user_input)
     st.session_state['generated'].append(output)
